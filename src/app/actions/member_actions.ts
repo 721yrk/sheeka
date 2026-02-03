@@ -2,8 +2,10 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { startOfDay, startOfMonth, endOfMonth, isAfter, addDays, getDaysInMonth, addHours, isBefore } from 'date-fns'
+import { startOfDay, startOfMonth, endOfMonth, isAfter, addDays, getDaysInMonth, addHours, isBefore, format } from 'date-fns'
+import { ja } from 'date-fns/locale'
 import { MEMBER_PLANS, getPlanFromId } from '@/lib/constants'
+import { sendLineMessage } from '@/lib/line' // Import LINE utils
 
 // 会員情報を取得（仮：emailから）
 export async function getCurrentMember(email: string) {
@@ -207,6 +209,23 @@ export async function createMemberBooking(data: {
             notes
         })
 
+        // LINE Notification
+        // 1. Get Member user to find LINE ID
+        const notificationMember = await prisma.member.findUnique({
+            where: { id: memberId },
+            include: { user: true }
+        })
+
+        if (notificationMember?.user?.lineUserId) {
+            const menuName = (await prisma.serviceMenu.findUnique({ where: { id: serviceMenuId } }))?.name || 'ご予約'
+            const staff = await prisma.staff.findUnique({ where: { id: staffIdToBook } })
+
+            const dateStr = format(startTime, 'M月d日(E) H:mm', { locale: ja })
+            const message = `🌟 予約が完了しました 🌟\n\n📅 日時: ${dateStr}\n📋 メニュー: ${menuName}\n👤 担当: ${staff?.name || '指名なし'}\n\nご来店をお待ちしております！`
+
+            await sendLineMessage(notificationMember.user.lineUserId, message)
+        }
+
         revalidatePath('/member-app/booking')
         return { success: true, message: '予約が完了しました', booking }
 
@@ -292,6 +311,19 @@ export async function cancelMemberBooking(bookingId: string, memberId: string, r
             message = '予約をキャンセルしました（今月1回目のため、特別にお振替可能としました）'
         } else if (status === 'cancelled_late') {
             message = '予約をキャンセルしました（24時間以内のため、1回分消化となります）'
+        }
+
+        // LINE Notification
+        // 1. Get Member user to find LINE ID
+        const notificationMember = await prisma.member.findUnique({
+            where: { id: memberId },
+            include: { user: true }
+        })
+
+        if (notificationMember?.user?.lineUserId) {
+            const dateStr = format(booking.startTime, 'M月d日(E) H:mm', { locale: ja })
+            const lineMsg = `🗑 予約をキャンセルしました\n\n📅 日時: ${dateStr}\n\nまたのご予約をお待ちしております。`
+            await sendLineMessage(notificationMember.user.lineUserId, lineMsg)
         }
 
         return { message, status }
