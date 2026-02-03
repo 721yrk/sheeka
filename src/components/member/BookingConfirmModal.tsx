@@ -33,6 +33,7 @@ interface BookingConfirmModalProps {
         staffId: string
         staffName: string
         duration: number
+        menuName?: string
     } | null
     isOverLimit: boolean
     extraFee: number
@@ -105,6 +106,12 @@ export function BookingConfirmModal({
                             <span className="text-slate-500">時間</span>
                             <span className="font-bold">{bookingData.duration}分</span>
                         </div>
+                        {bookingData.menuName && (
+                            <div className="flex justify-between">
+                                <span className="text-slate-500">メニュー</span>
+                                <span className="font-bold">{bookingData.menuName}</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-2">

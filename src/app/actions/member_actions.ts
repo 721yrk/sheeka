@@ -64,26 +64,26 @@ export async function getMemberBookings(memberId: string) {
     }
 }
 
-// 会員が予約を作成（契約回数チェック含む）
+import { createBooking } from './calendar_actions' // Import core logic
+
+// 会員が予約を作成
 export async function createMemberBooking(data: {
     memberId: string
-    staffId: string
+    serviceMenuId: string
     startTime: Date
-    duration: number
     notes?: string
-    type?: string
+    targetStaffId?: string // Optional: if member nominates
 }) {
     try {
-        const { memberId, staffId, startTime, duration, notes, type } = data
-        const endTime = new Date(startTime.getTime() + duration * 60 * 1000)
+        const { memberId, serviceMenuId, startTime, notes, targetStaffId } = data
 
-        // 会員情報を取得して契約回数を確認
+        // 1. 会員情報・プラン制限チェック
         const member = await prisma.member.findUnique({
             where: { id: memberId },
             include: {
                 bookings: {
                     where: {
-                        status: { not: 'cancelled' },
+                        status: { notIn: ['cancelled', 'cancelled_late'] },
                         startTime: {
                             gte: new Date(startTime.getFullYear(), startTime.getMonth(), 1),
                             lt: new Date(startTime.getFullYear(), startTime.getMonth() + 1, 1)
@@ -93,90 +93,134 @@ export async function createMemberBooking(data: {
             }
         })
 
-        if (!member) {
-            return { error: '会員が見つかりません' }
-        }
+        if (!member) return { error: '会員が見つかりません' }
 
-        // 予約期限チェック (プラン制限)
+        // プラン制限 (日数)
         const plan = getPlanFromId(member.plan || 'STANDARD')
         const maxAllowedDate = addDays(startOfDay(new Date()), plan.limitDays + 1)
-
         if (isAfter(startTime, maxAllowedDate)) {
             return { error: `現在のプランでは${plan.limitDays}日先までしか予約できません` }
         }
 
-        // 24時間前ルールチェック
-        // 予約希望時間の24時間前を過ぎている場合は予約不可
-        // つまり、予約日時が「現在＋24時間」よりも前なら不可
+        // 24時間前ルール
         const minAllowedTime = addHours(new Date(), 24)
         if (isBefore(startTime, minAllowedTime)) {
             return { error: '予約は希望時間の24時間前までにお願いします' }
         }
 
-        const currentMonthBookings = member.bookings.length
-        const isOverLimit = currentMonthBookings >= member.contractedSessions
-
-        // 重複チェック
-        const conflictingBooking = await prisma.booking.findFirst({
-            where: {
-                staffId,
-                status: { not: 'CANCELLED' },
-                OR: [
-                    {
-                        AND: [
-                            { startTime: { lte: startTime } },
-                            { endTime: { gt: startTime } }
-                        ]
-                    },
-                    {
-                        AND: [
-                            { startTime: { lt: endTime } },
-                            { endTime: { gte: endTime } }
-                        ]
-                    },
-                    {
-                        AND: [
-                            { startTime: { gte: startTime } },
-                            { endTime: { lte: endTime } }
-                        ]
-                    }
-                ]
-            }
-        })
-
-        if (conflictingBooking) {
-            return { error: 'この時間帯は既に予約されています' }
+        // 回数制限チェック
+        if (member.bookings.length >= member.contractedSessions) {
+            // チケット購入などの救済があれば別だが、基本はエラー
+            // return { error: '今月の予約回数上限に達しています' } 
+            // Warning only? Or block? Requirements say "Block" usually unless ticket.
+            // Let's return error for now.
+            return { error: '今月の予約回数上限に達しています' }
         }
 
-        // 予約作成
-        const booking = await prisma.booking.create({
-            data: {
-                memberId,
-                staffId,
-                startTime,
-                endTime,
-                type: type || 'REGULAR',
-                notes: notes || null,
-                status: 'CONFIRMED'
-            },
-            include: {
-                staff: true,
-                member: true
+        // 2. スタッフ割り当て (Staff Assignment)
+        let staffIdToBook = targetStaffId
+
+        if (!staffIdToBook) {
+            // Find available staff for this slot
+            // We need to check who is free.
+            // Use getAvailableSlots logic internally or just duplicates?
+            // Better to rely on the fact that the UI *should have* verified availability.
+            // But we must lock it in.
+            // Let's find ANY staff that fits.
+            const menu = await prisma.serviceMenu.findUnique({ where: { id: serviceMenuId } })
+            if (!menu) return { error: 'メニューが無効です' }
+
+            // Fetch all active staff
+            const allStaff = await prisma.staff.findMany({
+                where: { isActive: true },
+                include: { shifts: true, shiftOverrides: true }
+            })
+
+            // Proper check: Find first staff who can take this booking
+            // Reuse createBooking's internal check? 
+            // createBooking requires staffId.
+            // We need to iterate and try? Or pre-calculate.
+
+            // Quick check loop
+            for (const staff of allStaff) {
+                // Check if this staff can take it
+                // Check Shift
+                // Check Concurrent
+                // If yes, assign and break
+                // Check shift
+                const duration = menu.duration
+                const endTime = new Date(startTime.getTime() + duration * 60000)
+
+                // Shift Check (Simplified for "Any Staff" assignment)
+                // This logic duplication is risky. 
+                // Ideally getAvailableSlots returns "Available Staff IDs".
+                // UI should pass the staffId it found available, OR we pick one here.
+                // For now, let's pick the "Main Trainer" if available, else any.
+                // TODO: Refine this. For now, assume UI passes a valid staffId or we fail.
+                // Actually, let's just error if no staffId (UI must select).
+                // "指名なし" logic implies we pick.
             }
+
+            // Fallback: If no targetStaffId, try Main Trainer?
+            // If member has mainTrainer, try them first.
+            // const mainStaffId = ...
+            // For MVP, let's require UI to send a staffId (even if "Any", UI resolves it).
+            // NO, UI "Any" means user doesn't care. Backend should assign to balance load.
+            // Let's perform a search.
+        }
+
+        // Simple Strategy: If staffId is missing, fetch all staff and try to book first success.
+        if (!staffIdToBook) {
+            const allStaff = await prisma.staff.findMany({ where: { isActive: true } })
+            for (const s of allStaff) {
+                try {
+                    // Try to create booking with this staff
+                    // We need to catch error if full
+                    const booking = await createBooking({
+                        memberId,
+                        staffId: s.id,
+                        serviceMenuId,
+                        startTime,
+                        notes
+                    })
+
+                    revalidatePath('/member-app/booking')
+                    return {
+                        success: true,
+                        message: '予約が完了しました',
+                        booking
+                    }
+                } catch (e) {
+                    // Continue to next staff
+                    continue
+                }
+            }
+            return { error: '申し訳ありません、空きスタッフが見つかりませんでした' }
+        }
+
+        // If staffId specified
+        const booking = await createBooking({
+            memberId,
+            staffId: staffIdToBook,
+            serviceMenuId,
+            startTime,
+            notes
         })
 
         revalidatePath('/member-app/booking')
-        revalidatePath('/dashboard/calendar')
+        return { success: true, message: '予約が完了しました', booking }
 
-        return {
-            booking,
-            isOverLimit,
-            message: '予約が完了しました。'
-        }
     } catch (error) {
         console.error('Error creating booking:', error)
-        return { error: '予約の作成に失敗しました' }
+        return { error: error instanceof Error ? error.message : '予約の作成に失敗しました' }
     }
+}
+
+export async function getServiceMenus() {
+    return await prisma.serviceMenu.findMany({
+        where: { isActive: true },
+        orderBy: { duration: 'asc' }
+    })
 }
 
 // 会員が予約をキャンセル

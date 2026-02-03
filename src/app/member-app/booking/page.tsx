@@ -1,4 +1,5 @@
 import { getCurrentMember, getMemberBookings } from '@/app/actions/member_actions'
+import { prisma } from '@/lib/db'
 import { MemberBookingClient } from '@/components/member/MemberBookingClient'
 import { redirect } from 'next/navigation'
 
@@ -23,6 +24,11 @@ export default async function MemberBookingPage() {
     const bookingsResult = await getMemberBookings(member.id)
     const bookings = bookingsResult.bookings || []
 
+    const serviceMenus = await prisma.serviceMenu.findMany({
+        where: { isActive: true },
+        orderBy: { duration: 'asc' }
+    })
+
     return (
         <MemberBookingClient
             member={member}
@@ -31,6 +37,7 @@ export default async function MemberBookingPage() {
                 startTime: new Date(b.startTime),
                 endTime: new Date(b.endTime)
             }))}
+            serviceMenus={serviceMenus}
         />
     )
 }

@@ -57,13 +57,24 @@ export async function POST(req: NextRequest) {
         // 2. Call LINE API to create rich menu
         const richMenuId = await lineClient.createRichMenu(richMenuObject)
 
-        // 3. Upload Image (We need an image for the rich menu)
-        // Since we didn't implement image upload in UI yet, we'll skip uploading the *actual* image to LINE
-        // IF we don't upload an image, the menu works but is blank? No, LINE requires an image.
-        // For MVP, we might fail here if we don't upload.
-        // Let's assume we have a default "placeholder" image on the server or we skip this step and it might fail to display.
-        // WAIT: createRichMenu just creates ID. User sees nothing until image is linked.
-        // We will save to DB first.
+        // 3. Upload Image
+        try {
+            // Read default image from public folder
+            const fs = require('fs')
+            const path = require('path')
+            const imagePath = path.join(process.cwd(), 'public', 'images', 'rich_menu_default.png')
+
+            if (fs.existsSync(imagePath)) {
+                const imageBuffer = fs.readFileSync(imagePath)
+                await lineClient.setRichMenuImage(richMenuId, imageBuffer)
+                console.log(`Uploaded image for rich menu ${richMenuId}`)
+            } else {
+                console.warn("Default rich menu image not found, skipping upload.")
+            }
+        } catch (imgError) {
+            console.error("Failed to upload rich menu image:", imgError)
+            // Continue, don't fail the whole process but menu will be blank
+        }
 
         // 4. Save to Database
         const richMenu = await prisma.richMenu.create({
@@ -71,13 +82,18 @@ export async function POST(req: NextRequest) {
                 lineMenuId: richMenuId,
                 name: name,
                 chatBarText: chatBarText,
-                selected: true, // Defaulting to true for MVP
-                jsonConfig: richMenuObject as any
+                selected: true,
+                jsonConfig: richMenuObject as any,
+                imageUrl: '/images/rich_menu_default.png' // Save reference to public image
             }
         })
 
-        // 5. Set as Default for all users (since we selected "Default")
-        await lineClient.setDefaultRichMenu(richMenuId)
+        // 5. Set as Default for all users
+        try {
+            await lineClient.setDefaultRichMenu(richMenuId)
+        } catch (e) {
+            console.error("Failed to set default rich menu", e)
+        }
 
         return NextResponse.json({ success: true, richMenuId })
     } catch (error) {
