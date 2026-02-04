@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ArrowLeft, Send } from "lucide-react"
 import Link from "next/link"
-import ChatInput from "./ChatInput" // We'll create this client component
+import ChatInput from "@/components/crm/ChatInput"
 import { Badge } from "@/components/ui/badge"
 
 async function getChatHistory(userId: string) {
