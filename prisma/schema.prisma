@@ -101,8 +101,26 @@ model Member {
   reservations Reservation[]
   bodyRecords  BodyRecord[]
   bookings     Booking[] // NEW: For booking calendar system
+  tickets      Ticket[]  // NEW: Ticket system
 
   @@map("members")
+}
+
+model Ticket {
+  id          String   @id @default(cuid())
+  memberId    String
+  title       String   // "5 Trial Sessions", "Standard Ticket"
+  type        String   // "LIMITED", "UNLIMITED"
+  initialCount Int     // e.g. 5
+  remainingCount Int   // e.g. 5 -> 4 -> ...
+  expiryDate  DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@map("tickets")
 }
 
 model ConditioningLog {

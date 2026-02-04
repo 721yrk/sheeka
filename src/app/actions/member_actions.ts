@@ -66,6 +66,28 @@ export async function getMemberBookings(memberId: string) {
     }
 }
 
+// 会員の有効なチケットを取得
+export async function getMemberTickets(memberId: string) {
+    try {
+        const tickets = await prisma.ticket.findMany({
+            where: {
+                memberId,
+                isActive: true,
+                remainingCount: { gt: 0 },
+                OR: [
+                    { expiryDate: null },
+                    { expiryDate: { gte: new Date() } }
+                ]
+            },
+            orderBy: { expiryDate: 'asc' }
+        })
+        return { tickets }
+    } catch (error) {
+        console.error("Error fetching tickets:", error)
+        return { tickets: [] }
+    }
+}
+
 import { createBooking } from './calendar_actions' // Import core logic
 
 // 会員が予約を作成
@@ -111,12 +133,31 @@ export async function createMemberBooking(data: {
         }
 
         // 回数制限チェック
+        let consumptionType = 'PLAN'
+        let ticketToUse = null
+
         if (member.bookings.length >= member.contractedSessions) {
-            // チケット購入などの救済があれば別だが、基本はエラー
-            // return { error: '今月の予約回数上限に達しています' } 
-            // Warning only? Or block? Requirements say "Block" usually unless ticket.
-            // Let's return error for now.
-            return { error: '今月の予約回数上限に達しています' }
+            // プラン上限到達 -> チケット確認
+            // Find valid ticket
+            const tickets = await prisma.ticket.findMany({
+                where: {
+                    memberId: member.id,
+                    isActive: true,
+                    remainingCount: { gt: 0 },
+                    OR: [
+                        { expiryDate: null },
+                        { expiryDate: { gte: new Date() } }
+                    ]
+                },
+                orderBy: { expiryDate: 'asc' } // Use nearest expiry first
+            })
+
+            if (tickets.length > 0) {
+                consumptionType = 'TICKET'
+                ticketToUse = tickets[0]
+            } else {
+                return { error: '今月の予約回数上限に達しており、有効なチケットもありません' }
+            }
         }
 
         // 2. スタッフ割り当て (Staff Assignment)

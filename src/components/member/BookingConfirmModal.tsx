@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
@@ -36,6 +36,7 @@ interface BookingConfirmModalProps {
         menuName?: string
     } | null
     isOverLimit: boolean
+    hasTickets?: boolean // NEW
     extraFee: number
     onConfirm: (notes?: string, type?: string) => Promise<void>
     isSubmitting: boolean
@@ -47,6 +48,7 @@ export function BookingConfirmModal({
     onClose,
     bookingData,
     isOverLimit,
+    hasTickets = false,
     extraFee,
     onConfirm,
     isSubmitting,
@@ -130,12 +132,22 @@ export function BookingConfirmModal({
                         </Select>
                     </div>
 
-                    {isOverLimit && (
+                    {isOverLimit && !hasTickets && (
                         <div className="flex items-start gap-2 p-3 bg-orange-50 text-orange-700 rounded-lg text-sm">
                             <AlertCircle className="w-5 h-5 shrink-0" />
                             <div>
                                 今月の契約回数に達しています。<br />
                                 追加セッションの場合は別途料金が発生します。
+                            </div>
+                        </div>
+                    )}
+
+                    {isOverLimit && hasTickets && (
+                        <div className="flex items-start gap-2 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
+                            <CheckCircle2 className="w-5 h-5 shrink-0" />
+                            <div>
+                                今月の契約回数に達していますが、<br />
+                                <strong>チケットを1枚使用</strong>して予約可能です。
                             </div>
                         </div>
                     )}

@@ -24,6 +24,10 @@ export default async function MemberBookingPage() {
     const bookingsResult = await getMemberBookings(member.id)
     const bookings = bookingsResult.bookings || []
 
+    // Fetch Tickets
+    const ticketsResult = await getMemberTickets(member.id)
+    const tickets = ticketsResult.tickets || []
+
     const serviceMenus = await prisma.serviceMenu.findMany({
         where: { isActive: true },
         orderBy: { duration: 'asc' }
@@ -37,6 +41,7 @@ export default async function MemberBookingPage() {
                 startTime: new Date(b.startTime),
                 endTime: new Date(b.endTime)
             }))}
+            tickets={tickets}
             serviceMenus={serviceMenus}
         />
     )

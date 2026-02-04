@@ -39,13 +39,21 @@ interface ServiceMenu {
     description?: string | null
 }
 
+interface Ticket {
+    id: string
+    title: string
+    remainingCount: number
+    expiryDate: Date | null
+}
+
 interface MemberBookingClientProps {
     member: MemberProfile
     bookings: Booking[]
     serviceMenus: ServiceMenu[]
+    tickets: Ticket[]
 }
 
-export function MemberBookingClient({ member, bookings: initialBookings, serviceMenus }: MemberBookingClientProps) {
+export function MemberBookingClient({ member, bookings: initialBookings, serviceMenus, tickets }: MemberBookingClientProps) {
     const [selectedMenu, setSelectedMenu] = useState<ServiceMenu | null>(null)
     const [selectedDateTime, setSelectedDateTime] = useState<{ date: Date, time: string } | null>(null)
     const [confirmModalOpen, setConfirmModalOpen] = useState(false)
@@ -296,6 +304,7 @@ export function MemberBookingClient({ member, bookings: initialBookings, service
                     menuName: selectedMenu.name
                 } : null}
                 isOverLimit={isOverLimit}
+                hasTickets={tickets.length > 0 && tickets[0].remainingCount > 0} // Check valid tickets
                 extraFee={0} // No extra fee logic for now
                 onConfirm={handleConfirmBooking}
                 memberPlanId={member.plan || 'STANDARD'}
