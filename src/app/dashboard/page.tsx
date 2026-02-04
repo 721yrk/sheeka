@@ -93,8 +93,8 @@ export default async function DashboardPage() {
             .reduce((sum, m) => sum + (m.contractedSessions || 0), 0)
     }
 
-    const yujiSlots = calculateSessions(['Yuji', 'ゆうじ', '夏井', '優志'])
-    const risaSlots = calculateSessions(['Risa', 'りさ', 'RISA'])
+    const yujiSlots = calculateSessions(['Yuji', 'ゆうじ', '優志', '夏井 優志'])
+    const risaSlots = calculateSessions(['Risa', 'りさ', 'RISA', '莉沙', '夏井 莉沙'])
 
     const capacityData = [
         { name: 'YUJI', current: yujiSlots, max: MAX_CAPACITY },
