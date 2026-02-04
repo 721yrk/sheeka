@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User as UserIcon } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
+import ChatAutoRefresh from "@/components/crm/ChatAutoRefresh"
 
 async function getChatUsers() {
     // 1. Get users who have messages, ordered by most recent message
@@ -132,6 +133,7 @@ export default async function ChatListPage() {
                     </div>
                 </CardContent>
             </Card>
+            <ChatAutoRefresh />
         </div>
     )
 }

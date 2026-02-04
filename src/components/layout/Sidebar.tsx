@@ -15,6 +15,7 @@ import {
     BookOpen,
     BarChart3
 } from "lucide-react"
+import UnreadBadge from "@/components/crm/UnreadBadge"
 
 const routes = [
     {
@@ -121,11 +122,12 @@ export const Sidebar = () => {
                                         : "text-slate-500 hover:text-emerald-600 hover:bg-slate-50"
                                 )}
                             >
-                                <div className="flex items-center flex-1">
-                                    <route.icon className={cn("h-5 w-5 mr-3 transition-colors",
+                                <div className="flex items-center flex-1 w-full">
+                                    <route.icon className={cn("h-5 w-5 mr-3 transition-colors flex-shrink-0",
                                         pathname === route.href ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500"
                                     )} />
-                                    {route.label}
+                                    <span>{route.label}</span>
+                                    {route.label === "1:1チャット" && <UnreadBadge />}
                                 </div>
                             </Link>
                         ))}
