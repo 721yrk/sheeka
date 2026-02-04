@@ -154,12 +154,7 @@ export function MemberSettingsCard({ member, trainers = [] }: { member: any, tra
                     </>
                 )}
 
-                {/* Summary Info */}
-                <div className="pt-3 border-t space-y-2">
-                    <div className="text-xs text-slate-500">
-                        <span className="font-semibold">現在のプラン:</span> {currentPlanOption.label}
-                    </div>
-                </div>
+                {/* Summary Info - Removed as per request */}
             </CardContent>
         </Card>
     )
