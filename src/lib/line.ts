@@ -1,4 +1,4 @@
-import { Client, MiddlewareConfig } from '@line/bot-sdk';
+import { Client, MiddlewareConfig, Message } from '@line/bot-sdk';
 
 export const lineConfig = {
     channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || 'build_placeholder',
@@ -10,12 +10,13 @@ export const lineClient = new Client({
     channelSecret: process.env.LINE_CHANNEL_SECRET || 'build_placeholder',
 });
 
-export async function sendLineMessage(userId: string, text: string) {
+export async function sendLineMessage(userId: string, content: string | Message) {
     try {
-        await lineClient.pushMessage(userId, {
-            type: 'text',
-            text: text,
-        });
+        const message: Message = typeof content === 'string'
+            ? { type: 'text', text: content }
+            : content;
+
+        await lineClient.pushMessage(userId, message);
         console.log(`Message sent to ${userId}`);
         return true;
     } catch (error) {
