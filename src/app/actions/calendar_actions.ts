@@ -98,6 +98,39 @@ export async function createBooking(data: {
         throw new Error('この時間帯は満枠です')
     }
 
+    // NEW: Digital Prepaid Logic
+    const member = await prisma.member.findUnique({ where: { id: data.memberId } })
+    if (!member) throw new Error('メンバーが見つかりません')
+
+    let paidFromPrepaid = 0
+
+    if (member.plan === 'DIGITAL_PREPAID') {
+        // Validation: Balance > 0
+        if ((member.prepaidBalance || 0) <= 0) {
+            throw new Error('プリカ残高が不足しています（残高0円）。チャージしてください。')
+        }
+
+        const price = staff.unitPrice || 0
+        const currentBalance = member.prepaidBalance || 0
+
+        // Calculate deduction
+        // If balance >= price, deduct full price.
+        // If balance < price, deduct all balance (partial payment).
+        const deduction = Math.min(currentBalance, price)
+        paidFromPrepaid = deduction
+
+        // Update Member Balance
+        await prisma.member.update({
+            where: { id: member.id },
+            data: { prepaidBalance: { decrement: deduction } }
+        })
+
+        // Note: The UI should handle showing the message "Please pay difference" 
+        // We can't return a custom message easily here without changing the return type widely, 
+        // but `createBooking` returns the booking object. 
+        // The calling component can check `paidFromPrepaid` vs `staff.unitPrice` to show the toast.
+    }
+
     // 4. Create
     const booking = await prisma.booking.create({
         data: {
@@ -107,7 +140,8 @@ export async function createBooking(data: {
             startTime: data.startTime,
             endTime: endTime,
             notes: data.notes,
-            status: 'confirmed'
+            status: 'confirmed',
+            paidFromPrepaid // Save how much was paid
         },
         include: {
             member: true,
@@ -140,9 +174,10 @@ export async function updateBooking(id: string, data: {
 }
 
 // Cancel booking
-export async function cancelBooking(id: string) {
+export async function cancelBooking(id: string, reason: string = 'NORMAL') {
     const booking = await prisma.booking.findUnique({
-        where: { id }
+        where: { id },
+        include: { member: true } // Need member to refund
     })
 
     if (!booking) {
@@ -153,13 +188,38 @@ export async function cancelBooking(id: string) {
     const now = new Date()
     const hoursUntilBooking = (booking.startTime.getTime() - now.getTime()) / (1000 * 60 * 60)
 
-    // 24 hours or more before: 'cancelled' (not counted)
-    // Less than 24 hours: 'cancelled_late' (counted)
-    const status = hoursUntilBooking >= 24 ? 'cancelled' : 'cancelled_late'
+    // 24 hours or more before: 'cancelled' (refund)
+    // Less than 24 hours: 'cancelled_late' (no refund unless valid reason)
+    let status = 'cancelled'
+    let shouldRefund = true
+
+    if (hoursUntilBooking < 24) {
+        status = 'cancelled_late'
+        // Check valid reasons for late cancellation refund
+        const validReasons = ['SICKNESS', 'BEREAVEMENT', '体調不良', '不幸ごと']
+        if (validReasons.includes(reason)) {
+            shouldRefund = true
+        } else {
+            shouldRefund = false
+        }
+    }
+
+    // Process Refund if eligible and money was paid
+    if (shouldRefund && (booking.paidFromPrepaid || 0) > 0) {
+        await prisma.member.update({
+            where: { id: booking.memberId },
+            data: {
+                prepaidBalance: { increment: booking.paidFromPrepaid }
+            }
+        })
+    }
 
     const updatedBooking = await prisma.booking.update({
         where: { id },
-        data: { status }
+        data: {
+            status,
+            cancellationReason: reason
+        }
     })
 
     revalidatePath('/dashboard/calendar')

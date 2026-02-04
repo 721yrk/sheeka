@@ -26,6 +26,7 @@ export function MemberSettingsCard({ member, trainers = [] }: { member: any, tra
     const [plan, setPlan] = useState(member.plan || "STANDARD")
     const [contractedSessions, setContractedSessions] = useState(member.contractedSessions?.toString() || "4")
     const [mainTrainerId, setMainTrainerId] = useState(member.mainTrainerId || "")
+    const [prepaidBalance, setPrepaidBalance] = useState(member.prepaidBalance?.toString() || "0")
     const [isSaving, setIsSaving] = useState(false)
 
     // Helper to get trainer name
@@ -36,8 +37,9 @@ export function MemberSettingsCard({ member, trainers = [] }: { member: any, tra
         try {
             await updateMemberSettings(member.id, {
                 plan,
-                contractedSessions: (plan === 'STANDARD' || plan === 'PREMIUM') ? parseInt(contractedSessions) : 0, // Reset for others if needed, or keep
-                mainTrainerId: (plan === 'STANDARD' || plan === 'PREMIUM') ? mainTrainerId : null
+                contractedSessions: (plan === 'STANDARD' || plan === 'PREMIUM') ? parseInt(contractedSessions) : 0,
+                mainTrainerId: (plan === 'STANDARD' || plan === 'PREMIUM') ? mainTrainerId : null,
+                prepaidBalance: plan === 'DIGITAL_PREPAID' ? parseInt(prepaidBalance) : 0 // Reset if switching away? or keep? Keeping it 0 makes sense if not prepaid.
             })
             setIsEditing(false)
         } catch (error) {
@@ -51,6 +53,7 @@ export function MemberSettingsCard({ member, trainers = [] }: { member: any, tra
         setPlan(member.plan || "STANDARD")
         setContractedSessions(member.contractedSessions?.toString() || "4")
         setMainTrainerId(member.mainTrainerId || "")
+        setPrepaidBalance(member.prepaidBalance?.toString() || "0")
         setIsEditing(false)
     }
 
@@ -152,6 +155,30 @@ export function MemberSettingsCard({ member, trainers = [] }: { member: any, tra
                             )}
                         </div>
                     </>
+                )}
+
+                {/* Conditional Field: Prepaid Balance */}
+                {plan === 'DIGITAL_PREPAID' && (
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-600">プリカ残高</label>
+                        {isEditing ? (
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    className="w-28"
+                                    value={prepaidBalance}
+                                    onChange={e => setPrepaidBalance(e.target.value)}
+                                    disabled={isSaving}
+                                />
+                                <span className="text-sm text-slate-500">円</span>
+                            </div>
+                        ) : (
+                            <div className="text-2xl font-bold text-blue-600">
+                                {parseInt(prepaidBalance).toLocaleString()} <span className="text-sm text-slate-500 font-normal">円</span>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* Summary Info - Removed as per request */}

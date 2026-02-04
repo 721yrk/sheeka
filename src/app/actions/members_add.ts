@@ -12,6 +12,7 @@ export async function createMember(formData: FormData) {
     const plan = formData.get("plan") as string
     const contractedSessions = formData.get("contractedSessions") ? parseInt(formData.get("contractedSessions") as string) : 4
     const mainTrainerId = formData.get("mainTrainerId") as string | null
+    const prepaidCharge = formData.get("prepaidCharge") ? parseInt(formData.get("prepaidCharge") as string) : 0
 
     // Check existing only if email is provided
     if (email) {
@@ -33,6 +34,7 @@ export async function createMember(formData: FormData) {
             plan,
             contractedSessions,
             mainTrainerId: mainTrainerId || null, // Add trainer link
+            prepaidBalance: prepaidCharge // Set initial balance
         }
 
         if (email) {

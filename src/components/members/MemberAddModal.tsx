@@ -93,6 +93,17 @@ export function MemberAddModal({ trainers = [] }: { trainers?: Trainer[] }) {
                                 </div>
                             </>
                         )}
+
+                        {/* Conditional Fields for Digital Prepaid */}
+                        {selectedPlan === 'DIGITAL_PREPAID' && (
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="prepaidCharge" className="text-right">チャージ金額</Label>
+                                <div className="col-span-3 flex items-center gap-2">
+                                    <Input id="prepaidCharge" name="prepaidCharge" type="number" placeholder="0" defaultValue="0" />
+                                    <span className="text-sm text-slate-500">円</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={isPending}>登録する</Button>

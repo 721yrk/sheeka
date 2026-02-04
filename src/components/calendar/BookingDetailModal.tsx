@@ -37,16 +37,17 @@ interface BookingDetailModalProps {
 
 export function BookingDetailModal({ booking, open, onClose }: BookingDetailModalProps) {
     const [isCancelling, setIsCancelling] = useState(false)
+    const [cancelReason, setCancelReason] = useState('NORMAL')
     const router = useRouter()
 
     if (!open) return null
 
     const handleCancel = async () => {
-        if (!confirm(`${booking.member.name}様の予約をキャンセルしますか？`)) return
+        if (!confirm(`${booking.member.name}様の予約をキャンセルしますか？\n理由: ${getReasonLabel(cancelReason)}`)) return
 
         setIsCancelling(true)
         try {
-            await cancelBooking(booking.id)
+            await cancelBooking(booking.id, cancelReason)
             router.refresh()
             onClose()
         } catch (error) {
@@ -54,6 +55,16 @@ export function BookingDetailModal({ booking, open, onClose }: BookingDetailModa
             alert('予約のキャンセルに失敗しました')
         } finally {
             setIsCancelling(false)
+        }
+    }
+
+    const getReasonLabel = (r: string) => {
+        switch (r) {
+            case 'NORMAL': return '通常キャンセル'
+            case 'SICKNESS': return '体調不良'
+            case 'BEREAVEMENT': return '忌引・不幸ごと'
+            case 'OTHER': return 'その他'
+            default: return r
         }
     }
 

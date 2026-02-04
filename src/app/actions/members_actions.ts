@@ -70,6 +70,7 @@ export async function updateMemberSettings(
         plan?: string
         contractedSessions?: number
         mainTrainerId?: string | null
+        prepaidBalance?: number
     }
 ) {
     await prisma.member.update({

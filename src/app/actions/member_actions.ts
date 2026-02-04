@@ -136,27 +136,30 @@ export async function createMemberBooking(data: {
         let consumptionType = 'PLAN'
         let ticketToUse = null
 
-        if (member.bookings.length >= member.contractedSessions) {
-            // プラン上限到達 -> チケット確認
-            // Find valid ticket
-            const tickets = await prisma.ticket.findMany({
-                where: {
-                    memberId: member.id,
-                    isActive: true,
-                    remainingCount: { gt: 0 },
-                    OR: [
-                        { expiryDate: null },
-                        { expiryDate: { gte: new Date() } }
-                    ]
-                },
-                orderBy: { expiryDate: 'asc' } // Use nearest expiry first
-            })
+        // Digital Prepaid skips this check
+        if (member.plan !== 'DIGITAL_PREPAID') {
+            if (member.bookings.length >= member.contractedSessions) {
+                // プラン上限到達 -> チケット確認
+                // Find valid ticket
+                const tickets = await prisma.ticket.findMany({
+                    where: {
+                        memberId: member.id,
+                        isActive: true,
+                        remainingCount: { gt: 0 },
+                        OR: [
+                            { expiryDate: null },
+                            { expiryDate: { gte: new Date() } }
+                        ]
+                    },
+                    orderBy: { expiryDate: 'asc' } // Use nearest expiry first
+                })
 
-            if (tickets.length > 0) {
-                consumptionType = 'TICKET'
-                ticketToUse = tickets[0]
-            } else {
-                return { error: '今月の予約回数上限に達しており、有効なチケットもありません' }
+                if (tickets.length > 0) {
+                    consumptionType = 'TICKET'
+                    ticketToUse = tickets[0]
+                } else {
+                    return { error: '今月の予約回数上限に達しており、有効なチケットもありません' }
+                }
             }
         }
 
@@ -308,31 +311,42 @@ export async function cancelMemberBooking(bookingId: string, memberId: string, r
         let status = hoursUntilBooking >= 24 ? 'cancelled' : 'cancelled_late'
         let isRelieved = false
 
-        // 救済ロジック（24時間以内かつ特定理由の場合）
+        // 救済ロジック / Prepaid特殊ロジック
         if (status === 'cancelled_late' && (reason === 'SICKNESS' || reason === 'BEREAVEMENT')) {
-            const startOfCurrentMonth = startOfMonth(now)
-            const endOfCurrentMonth = endOfMonth(now)
-
-            // 当月の救済履歴を確認（statusがcancelledかつ、対象理由のもの）
-            const existingRelief = await prisma.booking.findFirst({
-                where: {
-                    memberId,
-                    status: 'cancelled', // 救済されたものは消化なし
-                    cancellationReason: {
-                        in: ['SICKNESS', 'BEREAVEMENT'] // 体調不良または不幸ごと
-                    },
-                    updatedAt: { // キャンセル日時（簡易的に更新日時を使用）
-                        gte: startOfCurrentMonth,
-                        lte: endOfCurrentMonth
-                    }
-                }
-            })
-
-            // 今月まだ救済されていなければ救済
-            if (!existingRelief) {
+            // DIGITAL_PREPAID: Always refund for sickness/bereavement (User Rule)
+            const member = await prisma.member.findUnique({ where: { id: memberId } })
+            if (member?.plan === 'DIGITAL_PREPAID') {
                 status = 'cancelled'
                 isRelieved = true
+            } else {
+                // STANDARD/PREMIUM: Only 1 time per month relief
+                const startOfCurrentMonth = startOfMonth(now)
+                const endOfCurrentMonth = endOfMonth(now)
+
+                const existingRelief = await prisma.booking.findFirst({
+                    where: {
+                        memberId,
+                        status: 'cancelled',
+                        cancellationReason: { in: ['SICKNESS', 'BEREAVEMENT'] },
+                        updatedAt: { gte: startOfCurrentMonth, lte: endOfCurrentMonth }
+                    }
+                })
+
+                if (!existingRelief) {
+                    status = 'cancelled'
+                    isRelieved = true
+                }
             }
+        }
+
+        // Refund for Prepaid if status is 'cancelled' (either >24h or Relieved)
+        // @ts-ignore
+        if (booking.paidFromPrepaid > 0 && status === 'cancelled') {
+            await prisma.member.update({
+                where: { id: memberId },
+                // @ts-ignore
+                data: { prepaidBalance: { increment: booking.paidFromPrepaid } }
+            })
         }
 
         // キャンセル

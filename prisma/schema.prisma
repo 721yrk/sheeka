@@ -88,6 +88,7 @@ model Member {
   manualDiscountRate Int? // Optional manual override for discount percentage
   contractedSessions Int      @default(4) // Number of sessions included in monthly contract
   mainTrainerId      String? // ID of the designated main trainer
+  prepaidBalance     Int      @default(0) // NEW: Digital Prepaid Balance
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -274,6 +275,7 @@ model Staff {
   color     String   @default("#3b82f6")
   isActive  Boolean  @default(true)
   maxConcurrentBookings Int @default(1) // NEW: Concurrent booking limit
+  unitPrice Int      @default(0) // NEW: Price per session for prepaid deduction
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -346,6 +348,7 @@ model Booking {
   type          String   @default("REGULAR") // REGULAR, ADDITIONAL, TRANSFER_MEMBER, TRANSFER_STORE, TRIAL
   cancellationReason String? // "SICKNESS" | "BEREAVEMENT" | "REST" | "OTHER" | "NORMAL"
   notes         String?
+  paidFromPrepaid Int     @default(0) // NEW: Amount paid using prepaid balance
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

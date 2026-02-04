@@ -58,13 +58,24 @@ export function BookingModal({
         setError('')
 
         try {
-            await createBooking({
+            const booking = await createBooking({
                 memberId: selectedMemberId,
                 staffId,
                 serviceMenuId: selectedMenuId,
                 startTime,
                 notes: notes || undefined
             })
+
+            // Check for Digital Prepaid Partial Payment
+            // @ts-ignore - unitPrice might be missing from type definition until easy regeneration
+            const unitPrice = booking.staff.unitPrice || 0
+            // @ts-ignore
+            const paid = booking.paidFromPrepaid || 0
+
+            if (paid > 0 && paid < unitPrice) {
+                const diff = unitPrice - paid
+                alert(`【重要】プリカ残高不足のため一部のみ決済されました。\n差額 ${diff.toLocaleString()}円 を当日受付にてお支払いください。`)
+            }
 
             // Reset and close
             setSelectedMemberId('')
