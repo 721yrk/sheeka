@@ -85,8 +85,18 @@ export default async function DashboardPage() {
     // C. Capacity Tracking (Yuji & Risa)
     // Find trainers by name or role. Hardcoding names for specific request.
     const MAX_CAPACITY = 60
-    const yujiMembers = allMembers.filter(m => m.mainTrainer?.name?.includes('Yuji') || m.mainTrainer?.name?.includes('ゆうじ')).length
-    const risaMembers = allMembers.filter(m => m.mainTrainer?.name?.includes('Risa') || m.mainTrainer?.name?.includes('りさ')).length
+    const yujiMembers = allMembers.filter(m =>
+        m.mainTrainer?.name?.includes('Yuji') ||
+        m.mainTrainer?.name?.includes('ゆうじ') ||
+        m.mainTrainer?.name?.includes('夏井') ||
+        m.mainTrainer?.name?.includes('優志')
+    ).length
+
+    const risaMembers = allMembers.filter(m =>
+        m.mainTrainer?.name?.includes('Risa') ||
+        m.mainTrainer?.name?.includes('りさ') ||
+        m.mainTrainer?.name?.includes('RISA')
+    ).length
 
     const capacityData = [
         { name: 'YUJI', current: yujiMembers, max: MAX_CAPACITY },

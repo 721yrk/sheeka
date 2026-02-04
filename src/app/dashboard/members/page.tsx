@@ -19,7 +19,8 @@ export default async function MembersPage({ searchParams }: { searchParams: { id
     const membersRaw = await prisma.member.findMany({
         orderBy: { updatedAt: 'desc' },
         include: {
-            user: true
+            user: true,
+            mainTrainer: true
         }
     })
 
