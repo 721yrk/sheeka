@@ -10,13 +10,10 @@ import { MEMBER_PLANS } from "@/lib/constants"
 import { updateMemberSettings } from "@/app/actions/members_actions"
 
 const PLAN_OPTIONS = [
+    { value: MEMBER_PLANS.STANDARD.id, label: MEMBER_PLANS.STANDARD.label, color: "bg-emerald-100 text-emerald-700" },
     { value: MEMBER_PLANS.PREMIUM.id, label: MEMBER_PLANS.PREMIUM.label, color: "bg-indigo-100 text-indigo-700" },
-    { value: MEMBER_PLANS.STANDARD.id, label: MEMBER_PLANS.STANDARD.label, color: "bg-blue-100 text-blue-700" },
-    { value: MEMBER_PLANS.TICKET.id, label: MEMBER_PLANS.TICKET.label, color: "bg-emerald-100 text-emerald-700" },
-    { value: MEMBER_PLANS.DIGITAL_PREPAID.id, label: MEMBER_PLANS.DIGITAL_PREPAID.label, color: "bg-rose-100 text-rose-700" },
-    // 旧プランの互換性維持
-    { value: "EMPLOYEES", label: "従業員", color: "bg-purple-100 text-purple-700" },
-    { value: "VIP", label: "VIP (旧)", color: "bg-amber-100 text-amber-700" }
+    { value: MEMBER_PLANS.DIGITAL_PREPAID.id, label: MEMBER_PLANS.DIGITAL_PREPAID.label, color: "bg-blue-100 text-blue-700" },
+    { value: MEMBER_PLANS.TICKET.id, label: MEMBER_PLANS.TICKET.label, color: "bg-amber-100 text-amber-700" },
 ]
 
 export function MemberSettingsCard({ member }: { member: any }) {

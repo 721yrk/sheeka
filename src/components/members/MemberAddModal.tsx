@@ -61,8 +61,10 @@ export function MemberAddModal() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="STANDARD">STANDARD</SelectItem>
-                                    <SelectItem value="PREMIUM">PREMIUM</SelectItem>
+                                    <SelectItem value="STANDARD">メンバー枠【スタンダード】</SelectItem>
+                                    <SelectItem value="PREMIUM">メンバー枠【プレミアム】</SelectItem>
+                                    <SelectItem value="DIGITAL_PREPAID">デジタルプリカ</SelectItem>
+                                    <SelectItem value="TICKET">回数券</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
