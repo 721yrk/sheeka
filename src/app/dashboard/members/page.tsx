@@ -83,9 +83,11 @@ export default async function MembersPage({ searchParams }: { searchParams: { id
                                         <button className={`w-full text-left p-3 rounded transition-all ${isSelected ? 'bg-emerald-50 border-emerald-200 ring-1 ring-emerald-200' : 'hover:bg-slate-50 border border-transparent'}`}>
                                             <div className="flex justify-between items-start mb-1">
                                                 <div className={`font-bold ${isSelected ? 'text-emerald-800' : 'text-slate-700'}`}>{member.name}</div>
-                                                <div className={`text-[10px] px-1.5 py-0.5 rounded ${rankColor}`}>
-                                                    {diffYears >= 1 ? `${Math.floor(diffYears)}年` : '新人'}
-                                                </div>
+                                                {diffYears >= 1 && (
+                                                    <div className={`text-[10px] px-1.5 py-0.5 rounded ${rankColor}`}>
+                                                        {Math.floor(diffYears)}年
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-2 text-[10px] text-slate-400">
                                                 <span>{member.plan}</span>
