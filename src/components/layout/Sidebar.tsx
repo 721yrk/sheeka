@@ -82,26 +82,78 @@ export const Sidebar = () => {
                     </p>
                 </Link>
 
-                <div className="space-y-2">
-                    {routes.map((route) => (
-                        <Link
-                            key={route.href}
-                            href={route.href}
-                            className={cn(
-                                "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer rounded-xl transition-all duration-200",
-                                pathname === route.href
-                                    ? "bg-emerald-50 text-emerald-700 shadow-sm"
-                                    : "text-slate-500 hover:text-emerald-600 hover:bg-slate-50"
-                            )}
-                        >
-                            <div className="flex items-center flex-1">
-                                <route.icon className={cn("h-5 w-5 mr-3 transition-colors",
-                                    pathname === route.href ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500"
-                                )} />
-                                {route.label}
-                            </div>
-                        </Link>
-                    ))}
+                <div className="space-y-6">
+                    {/* Main */}
+                    <div className="space-y-1">
+                        <p className="px-3 text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Store</p>
+                        {routes.slice(0, 3).map((route) => (
+                            <Link
+                                key={route.href}
+                                href={route.href}
+                                className={cn(
+                                    "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer rounded-xl transition-all duration-200",
+                                    pathname === route.href
+                                        ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                                        : "text-slate-500 hover:text-emerald-600 hover:bg-slate-50"
+                                )}
+                            >
+                                <div className="flex items-center flex-1">
+                                    <route.icon className={cn("h-5 w-5 mr-3 transition-colors",
+                                        pathname === route.href ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500"
+                                    )} />
+                                    {route.label}
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* CRM */}
+                    <div className="space-y-1">
+                        <p className="px-3 text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">CRM (L-Message)</p>
+                        {routes.slice(3, 6).map((route) => (
+                            <Link
+                                key={route.href}
+                                href={route.href}
+                                className={cn(
+                                    "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer rounded-xl transition-all duration-200",
+                                    pathname === route.href
+                                        ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                                        : "text-slate-500 hover:text-emerald-600 hover:bg-slate-50"
+                                )}
+                            >
+                                <div className="flex items-center flex-1">
+                                    <route.icon className={cn("h-5 w-5 mr-3 transition-colors",
+                                        pathname === route.href ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500"
+                                    )} />
+                                    {route.label}
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* Management */}
+                    <div className="space-y-1">
+                        <p className="px-3 text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Management</p>
+                        {routes.slice(6).map((route) => (
+                            <Link
+                                key={route.href}
+                                href={route.href}
+                                className={cn(
+                                    "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer rounded-xl transition-all duration-200",
+                                    pathname === route.href
+                                        ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                                        : "text-slate-500 hover:text-emerald-600 hover:bg-slate-50"
+                                )}
+                            >
+                                <div className="flex items-center flex-1">
+                                    <route.icon className={cn("h-5 w-5 mr-3 transition-colors",
+                                        pathname === route.href ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500"
+                                    )} />
+                                    {route.label}
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             </div>
 
