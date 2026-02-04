@@ -11,6 +11,8 @@ export async function updateMemberProfile(formData: FormData) {
     const dateOfBirth = formData.get('dateOfBirth') as string
     const joinDate = formData.get('joinDate') as string
 
+    console.log(`[updateMemberProfile] userId: ${userId}`) // Debug log
+
     if (!userId) return { error: 'Invalid User ID' }
 
     try {

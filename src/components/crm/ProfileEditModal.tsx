@@ -58,7 +58,9 @@ export default function ProfileEditModal({ member }: ProfileEditModalProps) {
         setIsLoading(true)
         try {
             const formDataToSend = new FormData()
-            formDataToSend.append('userId', member.id)
+            // Determine userId: if member.userId exists (Member resource), use it. Otherwise assume member.id is userId (User resource).
+            const targetUserId = member.userId || member.id
+            formDataToSend.append('userId', targetUserId)
             formDataToSend.append('name', formData.name)
             formDataToSend.append('kana', formData.kana)
             formDataToSend.append('gender', formData.gender)
