@@ -10,9 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createMember } from "@/app/actions/members_add"
 import { Plus } from "lucide-react"
 
-export function MemberAddModal() {
+interface Trainer {
+    id: string;
+    name: string;
+}
+
+export function MemberAddModal({ trainers = [] }: { trainers?: Trainer[] }) {
     const [open, setOpen] = useState(false)
     const [isPending, setIsPending] = useState(false)
+    const [selectedPlan, setSelectedPlan] = useState("STANDARD")
 
     const handleSubmit = async (formData: FormData) => {
         setIsPending(true)
@@ -47,16 +53,12 @@ export function MemberAddModal() {
                             <Input id="name" name="name" placeholder="山田 太郎" className="col-span-3" required />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email" className="text-right">Email <span className="text-xs text-slate-400 font-normal">(任意)</span></Label>
-                            <Input id="email" name="email" type="email" placeholder="taro@example.com" className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="joinDate" className="text-right">入会日</Label>
                             <Input id="joinDate" name="joinDate" type="date" className="col-span-3" required />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="plan" className="text-right">プラン</Label>
-                            <Select name="plan" defaultValue="STANDARD">
+                            <Select name="plan" value={selectedPlan} onValueChange={setSelectedPlan}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -68,10 +70,29 @@ export function MemberAddModal() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="contractedSessions" className="text-right">回数/月</Label>
-                            <Input id="contractedSessions" name="contractedSessions" type="number" defaultValue="4" className="col-span-3" />
-                        </div>
+
+                        {/* Conditional Fields for Standard/Premium */}
+                        {(selectedPlan === 'STANDARD' || selectedPlan === 'PREMIUM') && (
+                            <>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="mainTrainerId" className="text-right">メンバー枠</Label>
+                                    <Select name="mainTrainerId">
+                                        <SelectTrigger className="col-span-3">
+                                            <SelectValue placeholder="担当トレーナーを選択" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {trainers.map(t => (
+                                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="contractedSessions" className="text-right">回数/月</Label>
+                                    <Input id="contractedSessions" name="contractedSessions" type="number" defaultValue="4" className="col-span-3" />
+                                </div>
+                            </>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={isPending}>登録する</Button>

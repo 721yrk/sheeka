@@ -35,6 +35,12 @@ export default async function MembersPage({ searchParams }: { searchParams: { id
         ? members.find(m => m.id === selectedMemberId)
         : members[0]
 
+    // Fetch available trainers for selection
+    const trainers = await prisma.user.findMany({
+        where: { OR: [{ role: 'TRAINER' }, { title: { contains: 'Trainer' } }, { name: { in: ['Yuji', 'Risa', 'ゆうじ', 'りさ'] } }] },
+        select: { id: true, name: true }
+    })
+
     return (
         <div className="p-8 space-y-6 bg-neutral-50 min-h-screen font-sans">
             {/* Header */}
@@ -43,7 +49,7 @@ export default async function MembersPage({ searchParams }: { searchParams: { id
                     <Users className="w-5 h-5 text-emerald-600" />
                     メンバー管理総合ダッシュボード
                 </h2>
-                <MemberAddModal />
+                <MemberAddModal trainers={trainers} />
             </div>
 
             <div className="grid grid-cols-12 gap-6 h-[calc(100vh-10rem)]">
