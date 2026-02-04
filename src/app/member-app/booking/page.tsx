@@ -1,4 +1,4 @@
-import { getCurrentMember, getMemberBookings } from '@/app/actions/member_actions'
+import { getCurrentMember, getMemberBookings, getMemberTickets } from '@/app/actions/member_actions'
 import { prisma } from '@/lib/db'
 import { MemberBookingClient } from '@/components/member/MemberBookingClient'
 import { redirect } from 'next/navigation'
