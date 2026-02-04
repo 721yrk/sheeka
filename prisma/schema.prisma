@@ -69,6 +69,7 @@ model Member {
   id               String   @id @default(cuid())
   userId           String?  @unique
   name             String
+  kana             String? // NEW: Furigana
   dateOfBirth      DateTime
   gender           String
   phone            String

@@ -7,9 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { MessageSquare, Calendar, Tag as TagIcon, Settings, Menu } from "lucide-react"
+import ProfileEditModal from "@/components/crm/ProfileEditModal"
 
 // This page shows detailed CRM info for a single member
-export default async function MemberDetailPage({ params }: { params: { id: string } }) {
+export default async function MemberDetailPage(props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const member = await prisma.user.findUnique({
         where: { id: params.id },
         include: {
@@ -88,13 +90,36 @@ export default async function MemberDetailPage({ params }: { params: { id: strin
 
                         <TabsContent value="attributes" className="space-y-6 pt-4">
                             <Card>
-                                <CardHeader>
+                                <CardHeader className="flex flex-row items-center justify-between">
                                     <CardTitle>基本情報</CardTitle>
+                                    <ProfileEditModal member={member} />
                                 </CardHeader>
                                 <CardContent className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
-                                        <p className="text-slate-500 mb-1">登録日</p>
-                                        <p>{new Date(member.createdAt).toLocaleDateString()}</p>
+                                        <p className="text-slate-500 mb-1">名前</p>
+                                        <p>{member.name}</p>
+                                        {member.memberProfile?.kana && (
+                                            <p className="text-xs text-slate-400">{member.memberProfile.kana}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 mb-1">登録日 (入会日)</p>
+                                        <div className="flex flex-col">
+                                            <span>{new Date(member.createdAt).toLocaleDateString()} (System)</span>
+                                            {member.memberProfile?.joinDate && (
+                                                <span className="text-xs text-slate-400">
+                                                    {new Date(member.memberProfile.joinDate).toLocaleDateString()} (入会)
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 mb-1">生年月日 / 性別</p>
+                                        <p>
+                                            {member.memberProfile?.dateOfBirth ? new Date(member.memberProfile.dateOfBirth).toLocaleDateString() : '-'}
+                                            {' / '}
+                                            {member.memberProfile?.gender === 'MALE' ? '男性' : member.memberProfile?.gender === 'FEMALE' ? '女性' : '不明'}
+                                        </p>
                                     </div>
                                     <div>
                                         <p className="text-slate-500 mb-1">LINE ID</p>
