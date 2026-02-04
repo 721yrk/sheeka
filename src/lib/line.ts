@@ -1,13 +1,13 @@
 import { Client, MiddlewareConfig } from '@line/bot-sdk';
 
 export const lineConfig = {
-    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-    channelSecret: process.env.LINE_CHANNEL_SECRET || '',
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || 'build_placeholder',
+    channelSecret: process.env.LINE_CHANNEL_SECRET || 'build_placeholder',
 };
 
 export const lineClient = new Client({
-    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-    channelSecret: process.env.LINE_CHANNEL_SECRET || '',
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || 'build_placeholder',
+    channelSecret: process.env.LINE_CHANNEL_SECRET || 'build_placeholder',
 });
 
 export async function sendLineMessage(userId: string, text: string) {
