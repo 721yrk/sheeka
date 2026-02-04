@@ -80,11 +80,41 @@ export async function POST(req: NextRequest) {
                     }
                 }
 
-                // 2. Handle Text Message
+                // 3. Handle Text Message
                 if (event.type === 'message' && event.message.type === 'text') {
                     try {
                         // Find user first
-                        const user = await prisma.user.findUnique({ where: { lineUserId } });
+                        let user = await prisma.user.findUnique({ where: { lineUserId } });
+
+                        // If user doesn't exist (e.g. Added friend before Webhook implementation), create them now
+                        if (!user) {
+                            try {
+                                const profile = await client.getProfile(lineUserId);
+                                user = await prisma.user.create({
+                                    data: {
+                                        lineUserId,
+                                        name: profile.displayName,
+                                        lineDisplayName: profile.displayName,
+                                        linePictureUrl: profile.pictureUrl,
+                                        isLineFriend: true,
+                                        email: `line_${lineUserId}@sheeka.local`,
+                                        passwordHash: '$2a$12$DummyHashForLineUser_______________________',
+                                        role: 'MEMBER',
+                                        memberProfile: {
+                                            create: {
+                                                name: profile.displayName,
+                                                dateOfBirth: new Date(),
+                                                gender: 'UNKNOWN',
+                                                phone: '',
+                                                emergencyContact: ''
+                                            }
+                                        }
+                                    }
+                                });
+                            } catch (error) {
+                                console.error('Error creating user from message event:', error);
+                            }
+                        }
 
                         if (user) {
                             // Store message
